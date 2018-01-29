@@ -1,0 +1,50 @@
+main:		irmovl $0x1000, %esp		#initiates stack pointer
+		rdint %edx			#User enters number (n)
+		pushl %edx			#pushes value to stack to be used later
+		call fibonacci			#calls fibonacci method
+		popl %edx			#removes %eax from stack
+		wrint %eax
+		call new_line			#calls new line function/adds line to end of output
+		halt				#ends program
+
+fibonacci: 	pushl %ebp			#ON_ENTRY saving old base/frame ptr
+		rrmovl %esp, %ebp		#ON_ENTRY set new frame ptr			
+		irmovl $4, %ebx
+		subl %edx, %esp
+		mrmovl 8(%ebp), %ecx		#retrieves n
+		irmovl $1, %ebx
+		irmovl $0, %edi
+		subl %edi, %ecx
+		je SecondCase
+		subl %ebx, %ecx
+		je FirstCase
+		jmp Fib
+		
+Fib:		
+		pushl %ecx
+		call fibonacci
+		popl %ecx
+		rmmovl %eax, -4(%ebp)
+		subl %ebx, %ecx
+		pushl %ecx
+		call fibonacci
+		popl %ecx
+		mrmovl -4(%ebp), %edi
+		addl %edi, %eax
+		jmp End
+
+FirstCase:	irmovl $1, %eax
+		jmp End
+
+SecondCase: 	irmovl $0, %eax
+		jmp End
+		
+End:		rrmovl %ebp, %esp
+		popl %ebp
+		ret
+
+
+new_line: 	irmovl $10, %ebx		#puts the integer 10 in the %ebx register
+		wrch %ebx			#prints out new line
+		ret				#exits from function
+

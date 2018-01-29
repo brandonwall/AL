@@ -1,0 +1,148 @@
+main:		irmovl $0x1000, %esp	#Initiates stack pointer
+		pushl %ebp              #ON_ENTRY set new frame pointer
+		rrmovl %esp, %ebp	#ON_ENTRY saving old base/frame ptr
+		irmovl $8, %eax		#We will have 2 local variables
+		subl %eax, %ebp		#(8 bytes, 4 bytes each) 
+					#sub to adjust stack
+		irmovl $0, %ecx		#set ecx to 0
+		irmovl data, %eax	#sets register to data
+		pushl %eax		#pushes reg referring to data to stack
+		call read		#calls read
+		popl %eax		#removes used parameter from stack
+		irmovl data, %eax	#sets data to eax register again
+		rmmovl %ecx, -4(%ebp)	#creates local var: array_size
+	
+		irmovl $4, %edx		#puts 4 in edx register
+		rrmovl %ecx, %edi	#copies counter to edi register
+		multl %edx, %edi	#multiplies counter by 4
+					#Amount of bytes needed
+		addl %edi, %eax		#moves eax pointer to end of array
+		irmovl $4, %edx			
+		subl %edx, %eax		#subtracts by 4(indexing)
+		rmmovl %eax, -8(%ebp)	#Places  pointer to the end of eax(data)
+		       	     		#register in local variable
+		
+		mrmovl -8(%ebp), %ebx	#copies local variable to register
+		mrmovl -4(%ebp), %ecx	#copies local variable to register
+		irmovl $0, %edx  	#sets edx register to 0	
+		pushl %edx		#pushes total to stack
+		pushl %ecx		#pushes counter to stack
+		pushl %ebx		#pushes array pointer to end of array to stack
+		
+		call rps		#calls rps
+
+		popl %ebx		#pops array from stack
+		popl %ecx	      	#pops counter from stack
+		popl %edx		#pops %edx from stack
+
+		rmmovl %ecx, -8(%ebp)	#creates local var: array_size
+		mrmovl -8(%ebp), %ecx	#places array_size back in ecx
+		irmovl data, %eax	#sets eax to data
+		pushl %ecx   		#pushes first parameter
+		pushl %eax		#pushes second parameter
+		call print		#calls print
+		popl %eax		#removes parameter
+		popl %ecx		#removes parameter
+		irmovl $10, %eax	#moves ascii character for new line in eax
+		wrch %eax   		#prints new line
+			
+		rrmovl %ebp, %esp	#On_EXIT reset stack ptr
+		popl %ebp		#ON_EXIT restore old base/frame ptr
+		halt			#terminates program
+		
+read:		pushl %ebp		#ON_ENTRY saving old base/frame pointer
+		rrmovl %esp, %ebp	#ON_ENTRY set new frame pointer
+		mrmovl 8(%ebp), %ebx	#retrieves parameter(array)
+			
+RLoop:		rdint %edx		#reads in integer
+		rrmovl %edx, %esi	#copies integer to esi
+		irmovl $1, %edi		#
+		addl %edi, %esi		#if adds esi to 1
+		je REnd	   		#jumps if above is  equal to 0
+		rmmovl %edx, 0(%ebx)	#places integer in array
+		irmovl $4, %edi		#Adds 4 to ebx pointer and
+		addl %edi, %ebx		#moves pointer to next position in array
+		irmovl $1, %edi				
+		addl %edi, %ecx		#increases counter by 1
+		irmovl $20, %edi	#subtracts counter by 20 
+		subl %ecx, %edi		#and saves in edi
+		je REnd			#if above operation is 0, jump to REnd
+		jmp RLoop		#else jump back to RLoop
+								
+REnd:		rrmovl %ebp, %esp	#ON_EXIT reset stack ptr
+		popl %ebp		#ON_EXIT restore old base/frame pointer
+		ret  			#Exit function
+
+print:		pushl %ebp		#ON_ENTRY saving old base/frame pointer
+		rrmovl %esp, %ebp	#ON_ENTRY set new frame pointer
+		mrmovl 8(%ebp), %eax	#retrieves first parameter
+		mrmovl 12(%ebp), %ecx	#retrieves second parameter
+	
+PLoop:
+		mrmovl (%eax), %ebx     #retrieves value from array
+		wrint %ebx		#prints integer
+		irmovl $32, %esi	#puts ascii integer for space in esi
+		wrch %esi		#prints space
+		irmovl $4, %esi		#places 4 in esi to add to eax
+		addl %esi, %eax		#moves eax to next position
+		irmovl $1, %esi		#moves 1 to esi to subtract from ecx
+		subl %esi, %ecx 	#decrease counter by 1  
+		jle PEnd   		#jump to end of loop if less than or equal to 0
+		jmp PLoop		#jumps to top of loop
+			
+PEnd:		rrmovl %ebp, %esp	#ON_EXIT reset stack ptr
+		popl %ebp		#ON_EXIT restore old base/frame pointer
+		ret			#Exit function
+			
+rps:		pushl %ebp		#ON_ENTRY saving old base/frame pointer
+		rrmovl %esp, %ebp	#ON_ENTRY set new frame pointer
+		mrmovl 8(%ebp), %ebx	#retrieves parameter(array)
+		mrmovl 12(%ebp), %ecx	#retrieves parameter(size)
+		mrmovl 16(%ebp), %edx	#retireves parameter(total)
+
+		irmovl $1, %edi	 	#moves 1 to edi to decrease counter
+		subl %edi, %ecx		#decreases counter
+		jl BaseCase		#Jump to base case
+Rec:
+		pushl %ebx		#push pointer to array to stack
+		mrmovl (%ebx),%esi	#retrieves pointer var
+		addl %esi, %edx		#adds to total
+		popl %ebx  		#pops array from stack
+		irmovl $4, %edi		
+		rmmovl %edx, (%ebx)	#puts total in array
+		subl %edi, %ebx		#start from 1 position over
+
+		pushl %edx		#pushes updated var to stack
+		pushl %ecx		#pushes updated var to stack
+		pushl %ebx		#pushes updated var to stack
+		call rps		#recursive call
+
+BaseCase:	rrmovl %ebp, %esp	#ON_EXIT reset stack ptr
+		popl %ebp		#ON_EXIT restore old base/frame pointer
+		ret  			#Exit function
+			
+
+MAX_LEN:	.long 20		#constant max length
+
+
+
+data:		.long 0			#Array with 20 spaces
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0			
+		.long 0
+		.long 0

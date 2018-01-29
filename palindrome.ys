@@ -1,0 +1,86 @@
+main:	irmovl $0x1000, %esp		# init stack ptr
+	irmovl $0, %ecx			# use ecx for counter
+	call fill_array			#calls the function fill_array
+	call palindrome 		#calls the function palindrome
+	call new_line 			#adds new line to end of output
+	halt 				#ends program
+
+fill_array:				#fills array with integers representing
+					#chars
+		irmovl data, %eax 	#sets register to data array
+Loop_Read: 				#start loop
+		rdch %ebx 		#reads in integer value from user	
+		rrmovl %ebx, %edx 	#copies whats in %ebx register to %edx
+		irmovl $10, %esi
+		subl %esi, %edx 	# subtracts 10 from %edx
+		je End_Loop_Read 	#if above = 0 jump to end loop
+		irmovl $1, %esi
+		addl %esi ,%ecx 	#adds 1 to counter
+		rmmovl %ebx, 0(%eax) 	#copies whats in register %ebx to %eax
+		irmovl $4, %esi
+		addl %esi, %eax		#moves eax over 4 bytes
+		rrmovl %ecx, %edx 	#copies the counter 
+		irmovl $20, %esi
+		subl %esi, %edx		#subtracts 20 from %edx 
+		je End_Loop_Read 	#if previous is 20 then 
+		jmp Loop_Read 		#Go back to beginning of loop
+End_Loop_Read:				#end loop
+		ret 			#return
+		
+palindrome:	irmovl $1, %edi
+		subl %edi, %ecx
+		jle Other_End
+		addl %edi, %ecx
+		irmovl data, %eax 	#sets register to data array
+		irmovl data, %ebp	#sets register to data array
+		rrmovl %ecx, %ebx	#copies contents of %ecx to %ebx
+		irmovl $2, %edi		#initializes reg. to 2
+		divl %edi, %ecx		#divides %ecx by 2
+		irmovl $4, %edi		#sets %edi to 4
+		multl %edi, %ebx	#multilplies ebx by (4 * counter)
+		subl %edi, %ebx  	#subtract ebx by 4
+		addl %ebx, %ebp		#moves ebp pointer to end of array
+Loop: 		mrmovl 0(%ebp), %esi	#moves value within array to register
+	 	mrmovl 0(%eax), %edx	#moves value within array to register
+		subl %edx, %esi		#subtracts both values
+		jne End_Loop		#if not zero, then jump to end loop
+		subl %edi, %ebp		#moves ebp to array-2 spot
+		addl %edi, %eax		#moves eax to 2nd spot in array
+		irmovl $1, %ebx		#sets ebx register to 1
+		subl %ebx, %ecx		#subtract ecx by 1
+		je Other_End		#if counter is zero, jump to alternate end
+		jmp Loop
+		
+End_Loop:	irmovl $78, %ebx	#moves value to ebx
+		wrch %ebx   		#prints out N
+		ret  			#returns
+
+Other_End:	irmovl $89, %ebx	#moves value to ebx
+		wrch %ebx   		#prints out Y
+		ret  			#return
+
+new_line:	irmovl $10, %eax	#sets value to eax
+		wrch %eax   		#prints new line
+		ret  			#returns 
+
+data:		.long 0			#Declares array with 20 spaces
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		.long 0
+		
